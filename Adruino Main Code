@@ -1,0 +1,131 @@
+#include<LiquidCrystal.h>
+const int rs = 13, en = 12, d4 =11 , d5 = 10, d6 =9, d7 = 8;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+int data=A0;//heartbeatsensor
+int buzzer=7;
+int relay=5;
+int sw=4;
+unsigned long temp=0;
+byte customChar1[8] = {0b00000,0b00000,0b00011,0b00111,0b01111,0b01111,0b01111,0b01111};
+byte customChar2[8] = {0b00000,0b11000,0b11100,0b11110,0b11111,0b11111,0b11111,0b11111};
+byte customChar3[8] = {0b00000,0b00011,0b00111,0b01111,0b11111,0b11111,0b11111,0b11111};
+byte customChar4[8] = {0b00000,0b10000,0b11000,0b11100,0b11110,0b11110,0b11110,0b11110};
+byte customChar5[8] = {0b00111,0b00011,0b00001,0b00000,0b00000,0b00000,0b00000,0b00000};
+byte customChar6[8] = {0b11111,0b11111,0b11111,0b11111,0b01111,0b00111,0b00011,0b00001};
+byte customChar7[8] = {0b11111,0b11111,0b11111,0b11111,0b11110,0b11100,0b11000,0b10000};
+byte customChar8[8] = {0b11100,0b11000,0b10000,0b00000,0b00000,0b00000,0b00000,0b00000};
+// Timer variables
+unsigned long lastTime = 0;
+unsigned long timerDelay = 30000;
+int count=0;
+char mystr[20];
+char ch;
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#define ONE_WIRE_BUS 6
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+float temperature;
+void setup() {
+// put your setup code here, to run once:
+Serial.begin(9600);
+pinMode(buzzer,OUTPUT);
+pinMode(relay,OUTPUT);
+pinMode(sw,INPUT_PULLUP);
+lcd.begin(16, 2);
+lcd.createChar(1, customChar1);
+lcd.createChar(2, customChar2);
+lcd.createChar(3, customChar3);
+lcd.createChar(4, customChar4);
+lcd.createChar(5, customChar5);
+lcd.createChar(6, customChar6);
+lcd.createChar(7, customChar7);
+lcd.createChar(8, customChar8);
+lcd.clear();
+lcd.print("WOMEN SAFETY");
+// lcd.setCursor(0,1);
+// lcd.print("-ON SYSTEM ");
+Serial.println("WOMEN SAFETY");}
+void loop() {
+HEART_BEAT_MONITOR();
+TEMPERATURE();
+EMERGENCY();
+// delay(1000);
+}
+void EMERGENCY()
+{
+if(digitalRead(sw)==LOW)
+{
+float latitude=12.9016798;
+float longitude=77.6287308;
+Serial.println("EMERGENCY");
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.setCursor(0, 1);
+lcd.print("to check HB");
+// Serial.println("Place The Finger to check HB");
+delay(2000);
+// while(digitalRead(start)>0);
+lcd.clear();
+temp=millis();
+while(millis()<(temp+5000))
+{
+if(analogRead(data)<100)
+{
+count=count+1;
+lcd.setCursor(6, 0);
+lcd.write(byte(1));
+lcd.setCursor(7, 0);
+lcd.write(byte(2));
+lcd.setCursor(8, 0);
+lcd.write(byte(3));
+lcd.setCursor(9, 0);
+lcd.write(byte(4));
+lcd.setCursor(6, 1);
+lcd.write(byte(5));}
+lcd.setCursor(3, 1);
+lcd.write(byte(6));
+lcd.setCursor(4, 1);
+lcd.write(byte(7));
+lcd.setCursor(5, 1);
+lcd.write(byte(8));
+lcd.setCursor(7, 1);
+lcd.print(count);
+lcd.print(" BPM");
+temp=0;
+delay(1000);
+sprintf(mystr, "HB:%d", count);
+Serial.print(mystr);
+Serial.println("");
+delay(1500);
+if(count>120)
+{
+Serial.println("$MORE HEARTBEAT#");
+lcd.clear();
+lcd.print("MORE HEARTBEAT");
+digitalWrite(buzzer,HIGH);
+delay(1000);
+digitalWrite(buzzer,LOW);
+delay(500);
+} }
+void TEMPERATURE(){
+sensors.requestTemperatures();
+temperature = sensors.getTempCByIndex(0);
+Serial.print("Temperature: ");
+Serial.println(temperature);
+delay(1000);
+lcd.clear();
+lcd.print("TEMP:");
+lcd.print(temperature);
+delay(1500);
+// dtostrf(temperature, 5, 3, tempStr);
+if(temperature>35){
+Serial.println("$More Temperature#");
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print(" MORE ");
+lcd.setCursor(0,1);
+lcd.print(" TEMPERATURE ");
+delay(1000);
+}
+}
